@@ -1,0 +1,20 @@
+# Environments
+venv/
+env/
+.venv/
+
+# Environment Variables (CRITICAL: Do not commit API keys)
+.env
+
+# Python Caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS
+.DS_Store
+
+# Streamlit/App Specific
+sample_deck.pdf
+*.pdf
