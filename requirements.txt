@@ -3,3 +3,4 @@ google-generativeai
 pymupdf
 python-dotenv
 fpdf2
+python-docx==1.1.2

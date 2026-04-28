@@ -67,17 +67,22 @@ def generate_summary_json(extracted_text: str, use_demo: bool = False) -> dict:
     client = genai.Client(api_key=api_key)
 
     try:
-        prompt = f"Please process the following document text and extract the required information as JSON:\n\n<document>\n{extracted_text}\n</document>"
+        prompt = f"{SYSTEM_PROMPT}\n\nPlease process the following document text and extract the required information as JSON. Return ONLY the JSON object, with no markdown formatting.\n\n<document>\n{extracted_text}\n</document>"
         
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemma-3-1b-it',
             contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                response_mime_type="application/json"
-            )
         )
         content = response.text.strip()
+        
+        # Clean up possible markdown code blocks if the model ignores the "no markdown" rule
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
         
         return json.loads(content)
 
@@ -86,13 +91,18 @@ def generate_summary_json(extracted_text: str, use_demo: bool = False) -> dict:
     except Exception as e:
         raise Exception(f"AI Processing failed: {str(e)}")
 
-def chat_with_document(extracted_text: str, chat_history: list, new_message: str, use_demo: bool = False) -> str:
+def chat_with_document_stream(extracted_text: str, chat_history: list, new_message: str, use_demo: bool = False):
     """
-    Sends a follow-up question to Gemini about the document.
+    Sends a follow-up question to Gemini about the document and streams the response.
+    Returns a generator of text chunks.
     """
     if use_demo:
-        time.sleep(2)
-        return "*(Demo Mode)* This is a simulated response to your question: '" + new_message + "'. In production, the AI will analyze the document and provide a real answer here!"
+        demo_response = f"*(Demo Mode)* This is a simulated response to your question: '{new_message}'. In production, the AI will analyze the document and stream a real answer here!"
+        # Simulate streaming
+        for word in demo_response.split():
+            yield word + " "
+            time.sleep(0.05)
+        return
         
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key or api_key == "your_gemini_api_key_here":
@@ -101,10 +111,6 @@ def chat_with_document(extracted_text: str, chat_history: list, new_message: str
     client = genai.Client(api_key=api_key)
 
     try:
-        # Build conversation history
-        # Gemini API expects contents to be a string or a list of parts
-        # For simplicity in this single-turn emulation, we'll construct a prompt with the history
-        
         history_text = ""
         if chat_history:
             history_text = "Previous Conversation History:\n"
@@ -123,11 +129,13 @@ Here is the document text:
 User's new question: {new_message}
 Please provide a helpful, accurate, and concise answer based ONLY on the document text.
 """
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
+        response_stream = client.models.generate_content_stream(
+            model='gemma-3-1b-it',
             contents=prompt,
         )
-        return response.text.strip()
+        
+        for chunk in response_stream:
+            yield chunk.text
 
     except Exception as e:
         raise Exception(f"AI Chat failed: {str(e)}")

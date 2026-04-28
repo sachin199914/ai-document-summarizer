@@ -50,34 +50,42 @@ def dict_to_html(data: dict) -> str:
     """
     
     html = f"""
-<div style="font-family: sans-serif; max-width: 800px; margin: 0 auto; color: #333;">
-<h1 style="border-bottom: 3px solid #2e6c80; padding-bottom: 10px; color: #2e6c80; font-size: 2em;">
+<div style="font-family: inherit; max-width: 780px; margin: 0 auto; padding: 10px 0;">
+
+<h1 style="font-size: 1.8em; font-weight: 700; margin-bottom: 6px; padding-bottom: 14px; border-bottom: 1px solid rgba(128,128,128,0.25);">
     {data.get('document_title', 'Untitled Document')}
 </h1>
+<p style="opacity: 0.5; font-size: 0.85em; margin-bottom: 28px;">Generated on {datetime.now().strftime("%B %d, %Y")}</p>
 
-<p style="color: #666; font-style: italic;">Generated on: {datetime.now().strftime("%B %d, %Y")}</p>
-
-<div style="background-color: #f0f7f9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #2e6c80;">
-    <h2 style="margin-top: 0; color: #1e4b59; font-size: 1.4em;">Executive Summary</h2>
-    <p style="font-size: 1.1em; line-height: 1.6;">{data.get('executive_summary', 'No summary provided.')}</p>
+<div style="padding: 20px 22px; border-radius: 10px; margin-bottom: 28px; border: 1px solid rgba(128,128,128,0.2); background: rgba(128,128,128,0.08);">
+    <h3 style="margin: 0 0 10px 0; font-weight: 600;">📋 Executive Summary</h3>
+    <p style="font-size: 1em; line-height: 1.75; margin: 0; opacity: 0.9;">{data.get('executive_summary', 'No summary provided.')}</p>
 </div>
 
-<h2 style="color: #2e6c80; border-bottom: 2px solid #eee; padding-bottom: 5px;">Key Themes</h2>
-<ul style="line-height: 1.6; font-size: 1.05em;">
+<h3 style="font-weight: 600; margin-bottom: 12px;">🏷️ Key Themes</h3>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px;">
 """
     
     themes = data.get('key_themes', [])
     if not themes:
-        html += "<li>None identified</li>\n"
+        html += "<span style='opacity:0.5;'>None identified</span>\n"
     else:
-        for theme in themes:
-            html += f"<li><strong>{theme}</strong></li>\n"
+        pill_styles = [
+            "background:rgba(99,102,241,0.15); color:#818CF8;",
+            "background:rgba(16,185,129,0.15); color:#34D399;",
+            "background:rgba(245,158,11,0.15); color:#FBBF24;",
+            "background:rgba(239,68,68,0.15); color:#F87171;",
+            "background:rgba(168,85,247,0.15); color:#C084FC;",
+        ]
+        for i, theme in enumerate(themes):
+            style = pill_styles[i % len(pill_styles)]
+            html += f'<span style="display:inline-block; padding: 5px 14px; border-radius: 50px; font-size: 0.88em; font-weight: 500; {style}">{theme}</span>\n'
             
     html += """
-</ul>
+</div>
 
-<h2 style="color: #2e6c80; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 25px;">Detailed Takeaways</h2>
-<ul style="line-height: 1.6; font-size: 1.05em;">
+<h3 style="font-weight: 600; margin-bottom: 12px;">📌 Detailed Takeaways</h3>
+<ul style="line-height: 1.75; font-size: 1em; padding-left: 18px; opacity: 0.9;">
 """
 
     points = data.get('detailed_points', [])
@@ -87,9 +95,7 @@ def dict_to_html(data: dict) -> str:
         for point in points:
             html += f"<li style='margin-bottom: 8px;'>{point}</li>\n"
             
-    html += "</ul>\n"
-
-    html += "</div>"
+    html += "</ul>\n</div>"
     
     return html
 
